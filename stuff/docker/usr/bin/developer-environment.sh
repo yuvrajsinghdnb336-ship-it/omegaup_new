@@ -22,6 +22,18 @@ function ensure_contents() {
   echo "${contents}" | cat > "${path}"
 }
 
+# ------------------------------------------------------------------------------
+# Ensure required directories exist for local development.
+# These directories are expected by gitserver and grader, but Docker volumes
+# start empty and containers run as non-root users.
+# ------------------------------------------------------------------------------
+mkdir -p /var/lib/omegaup/problems.git
+mkdir -p /var/lib/omegaup/ephemeral
+
+if command -v chown >/dev/null 2>&1; then
+  chown -R "${UID_GID}" /var/lib/omegaup || true
+fi
+
 # Create a directory for Psalm's benefit.
 if [[ ! -d /opt/omegaup/frontend/www/phpminiadmin ]]; then
   mkdir -p /opt/omegaup/frontend/www/phpminiadmin

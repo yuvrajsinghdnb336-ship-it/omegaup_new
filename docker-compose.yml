@@ -40,6 +40,7 @@ services:
     restart: always
     depends_on:
       - mysql
+      - fix-permissions
     volumes:
       - type: bind
         source: ./stuff/docker/etc/omegaup/gitserver
@@ -77,6 +78,17 @@ services:
       - '32672'
       - '22291'
 
+  fix-permissions:
+    image: omegaup/backend:v1.9.35
+    user: root
+    command: chown -R ${UID_GID} /var/lib/omegaup
+    volumes:
+      - type: volume
+        source: omegaupdata
+        target: /var/lib/omegaup
+        volume:
+          nocopy: true
+
   grader:
     image: omegaup/backend:v1.9.35
     entrypoint: ["wait-for-it", "mysql:13306", "--", "/usr/bin/omegaup-grader"]
@@ -85,6 +97,7 @@ services:
     depends_on:
       - mysql
       - gitserver
+      - fix-permissions
     volumes:
       - type: bind
         source: ./stuff/docker/etc/omegaup/grader
@@ -191,3 +204,14 @@ volumes:
   omegaupdata:
   rabbitmq:
   redis:
+  gitserver:
+  image: omegaup/gitserver
+  volumes:
+    - omegaup-data:/var/lib/omegaup
+  command: >
+    sh -c "
+      mkdir -p /var/lib/omegaup/problems.git /var/lib/omegaup/ephemeral &&
+      chown -R 1000:1000 /var/lib/omegaup &&
+      /gitserver
+    "
+
